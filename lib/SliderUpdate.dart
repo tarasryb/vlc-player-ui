@@ -71,7 +71,6 @@ class _SliderUpdateState extends State<SliderUpdate> {
 
   @override
   Widget build(BuildContext context) {
-    // TODO: implement build
     return Slider(
         key: widget.key,
         value: widget.value,
