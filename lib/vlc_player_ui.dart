@@ -146,13 +146,11 @@ class _VlcPlayerUiState extends State<VlcPlayerUi> {
         onChangeStart: (__){
           setState(() {
             sliderMoving = true;
-            print('***            sliderMoving = true');
           });
         },
         onChangeEnd: (__){
           setState(() {
             sliderMoving = false;
-            print('***            sliderMoving = false');
           });
         },
         onChanged: (pos){
@@ -293,8 +291,6 @@ class _VlcPlayerUiState extends State<VlcPlayerUi> {
           textIndicator.update(textIndicatorValue);
         });
 
-    //print('***** Slider value: ${sliderValue}, ${oPosition}/${oDuration}');
-
     if(isError){
       return Center(
         child: Column(
@@ -396,8 +392,27 @@ class _VlcPlayerUiState extends State<VlcPlayerUi> {
 
                             FlatButton(
                               onPressed: (){
-                                widget.controller.getTime().then((value){widget.controller.setTime(value - 5000);});
+                                if(oPosition.inSeconds*1000 < 5000) return;
+                                widget.controller.getTime().then((value){
+                                  widget.controller.setTime(value - 1000);
+                                  widget.controller.setTime(value - 2000);
+                                  widget.controller.setTime(value - 3000);
+                                  widget.controller.setTime(value - 4000);
+                                  widget.controller.setTime(value - 5000);
+                                  print('***            goBack5s  getTime=${value}');
+                                });
+                                /*
+                                  widget.controller.setTime((oPosition.inSeconds*1000 - 2500).toInt()).then((__){
+                                    widget.controller.getTime().then((value){
+                                      print('***            goBack5s  getTime2=${value}');
+                                      widget.controller.setTime(value - 2500);
+                                    });
+                                  });
+                                  */
+
                                 sliderMoving = false;
+                                print('***            goBack5s  oPosition=${oPosition}');
+
                               },
                               child: Image.asset(
                                 'icons/goBack5s.png',
