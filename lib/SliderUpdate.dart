@@ -10,7 +10,7 @@ class SliderUpdate extends StatefulWidget {
   final ValueChanged<double> onChangeStart;
   final ValueChanged<double> onChangeEnd;
   final double min;
-  final double max;
+  double max;
   final int divisions;
   final String label;
   final Color activeColor;
@@ -43,12 +43,15 @@ class SliderUpdate extends StatefulWidget {
     return _SliderUpdateState();
   }
 
-  void update(double val){
+  void update(int val, int duration){
+    if(duration != null){
+      max = duration.toDouble();
+    }
     if(state==null)return;
     if(state.mounted) {
       try {
         state.setState(() {
-          value = val;
+          value = val.toDouble();
         });
       }
       catch (e) {}

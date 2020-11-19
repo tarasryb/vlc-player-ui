@@ -83,6 +83,7 @@ class VlcPlayerUi extends StatefulWidget {
 
 class _VlcPlayerUiState extends State<VlcPlayerUi> {
   double sliderValue;
+  bool sliderMoving;
   String textIndicatorValue;
   String position;
   String duration;
@@ -90,7 +91,7 @@ class _VlcPlayerUiState extends State<VlcPlayerUi> {
   bool isError;
   bool isPlaying;
   PlayingState prevPlayingState;
-  final Duration hidePanelTimeout = const Duration(milliseconds: 2500);
+  final Duration hidePanelTimeout = const Duration(milliseconds: 5000);
   Timer hidePanelTimer;
   final GlobalKey playerKey = GlobalKey(debugLabel: 'playerKey');
   final GlobalKey sliderKey = GlobalKey(debugLabel: 'sliderKey');
@@ -109,6 +110,7 @@ class _VlcPlayerUiState extends State<VlcPlayerUi> {
     isBuffering = false;
     prevPlayingState = null;
     sliderValue = 0;
+    sliderMoving =false;
     waitingForFirstFrame = true;
     isError = false;
   }
@@ -137,10 +139,28 @@ class _VlcPlayerUiState extends State<VlcPlayerUi> {
 
     slider = SliderUpdate(
         value: sliderValue==null?0:sliderValue,
-        max: 1,
+        max: widget.controller.duration == null
+            ? 1.0
+            : widget.controller.duration.inSeconds.toDouble(),
         min: 0,
+        onChangeStart: (__){
+          setState(() {
+            sliderMoving = true;
+            print('***            sliderMoving = true');
+          });
+        },
+        onChangeEnd: (__){
+          setState(() {
+            sliderMoving = false;
+            print('***            sliderMoving = false');
+          });
+        },
         onChanged: (pos){
           print('$pos');
+          setState(() {
+            sliderValue = pos.floor().toDouble();
+          });
+          widget.controller.setTime(sliderValue.toInt() * 1000);
         });
 
     slider2 = SliderUpdate(
@@ -190,8 +210,8 @@ class _VlcPlayerUiState extends State<VlcPlayerUi> {
             oDuration.inSeconds.toDouble();
         textIndicatorValue = '${position}/${duration}';
 
-        slider.update(sliderValue);
-        slider2.update(sliderValue);
+        slider.update(oPosition.inSeconds, oDuration.inSeconds);//sliderValue);
+        slider2.update(oPosition.inSeconds, oDuration.inSeconds);//sliderValue);
         textIndicator.update(textIndicatorValue);
 
         if(widget.controller.playingState == prevPlayingState){
@@ -258,7 +278,9 @@ class _VlcPlayerUiState extends State<VlcPlayerUi> {
       hidePanelTimer = Timer(hidePanelTimeout, () {
         hidePanelTimer = null;
         setState(() {
-          widget.showControlPanel = false;
+          if(!sliderMoving) {
+            widget.showControlPanel = false;
+          }
         });
       });
     }
@@ -266,8 +288,8 @@ class _VlcPlayerUiState extends State<VlcPlayerUi> {
     //update both of sliders and text indicator
     Timer(Duration(milliseconds: 100),
         (){
-          slider.update(sliderValue);
-          slider2.update(sliderValue);
+          slider.update(oPosition.inSeconds, oDuration.inSeconds);
+          slider2.update(oPosition.inSeconds, oDuration.inSeconds);
           textIndicator.update(textIndicatorValue);
         });
 
@@ -350,6 +372,10 @@ class _VlcPlayerUiState extends State<VlcPlayerUi> {
               setState(() {
                 widget.showControlPanel = true;
               });
+            }else{
+              setState(() {
+                widget.showControlPanel = false;
+              });
             }
           },
           child: AnimatedSwitcher(
@@ -371,6 +397,7 @@ class _VlcPlayerUiState extends State<VlcPlayerUi> {
                             FlatButton(
                               onPressed: (){
                                 widget.controller.getTime().then((value){widget.controller.setTime(value - 5000);});
+                                sliderMoving = false;
                               },
                               child: Image.asset(
                                 'icons/goBack5s.png',
@@ -380,14 +407,20 @@ class _VlcPlayerUiState extends State<VlcPlayerUi> {
 
                             isPlaying
                             ?FlatButton(
-                              onPressed: (){widget.controller.pause();},
+                              onPressed: (){
+                                widget.controller.pause();
+                                sliderMoving = false;
+                                },
                               child: Image.asset(
                                 'icons/pause.png',
                                 package: 'vlc_player_ui',
                               ),
                             )
                             :FlatButton(
-                              onPressed: (){widget.controller.play();},
+                              onPressed: (){
+                                widget.controller.play();
+                                sliderMoving = false;
+                                },
                               child: Image.asset(
                                 'icons/play.png',
                                 package: 'vlc_player_ui',
@@ -397,7 +430,9 @@ class _VlcPlayerUiState extends State<VlcPlayerUi> {
                             FlatButton(
                               onPressed: (){
                                 widget.controller.setTime(0);
-                                widget.controller.play();},
+                                widget.controller.play();
+                                sliderMoving = false;
+                                },
                               child:
                               Image.asset(
                                 'icons/rePlay.png',
